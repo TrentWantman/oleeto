@@ -1,0 +1,81 @@
+import { app, BrowserWindow, ipcMain } from 'electron'
+import path from 'path'
+import { Database } from './database'
+import { syncToGitHub } from './github'
+
+let mainWindow: BrowserWindow | null = null
+let db: Database
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    minWidth: 900,
+    minHeight: 600,
+    backgroundColor: '#0a0a0a',
+    titleBarStyle: 'hiddenInset',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  })
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+  }
+}
+
+function registerHandlers() {
+  ipcMain.handle('problems:list', () => db.getProblems())
+  ipcMain.handle('problems:add', (_, problem) => db.addProblem(problem))
+  ipcMain.handle('problems:delete', (_, id) => db.deleteProblem(id))
+  ipcMain.handle('problems:update', (_, id, data) => db.updateProblem(id, data))
+  ipcMain.handle('problems:unsynced', () => db.getUnsyncedProblems())
+  ipcMain.handle('problems:mark-synced', (_, ids) => db.markSynced(ids))
+
+  ipcMain.handle('stats:overview', () => db.getOverview())
+  ipcMain.handle('stats:heatmap', (_, year) => db.getHeatmapData(year))
+
+  ipcMain.handle('settings:get', (_, key) => db.getSetting(key))
+  ipcMain.handle('settings:set', (_, key, value) => db.setSetting(key, value))
+
+  ipcMain.handle('github:sync', async () => {
+    const token = db.getSetting('github_token')
+    const owner = db.getSetting('github_owner')
+    const repo = db.getSetting('github_repo')
+
+    if (!token || !owner || !repo) {
+      throw new Error('Configure GitHub in Settings first')
+    }
+
+    const problems = db.getUnsyncedProblems()
+    if (problems.length === 0) {
+      return { synced: 0, message: 'Already up to date' }
+    }
+
+    const count = await syncToGitHub({ token, owner, repo }, problems)
+    db.markSynced(problems.map(p => p.id))
+
+    return {
+      synced: count,
+      message: `Synced ${count} solution${count > 1 ? 's' : ''}`,
+    }
+  })
+}
+
+app.whenReady().then(() => {
+  db = new Database()
+  registerHandlers()
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
