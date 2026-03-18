@@ -47,6 +47,25 @@ function registerHandlers() {
 
   ipcMain.handle('shell:open-external', (_, url) => shell.openExternal(url))
 
+  ipcMain.handle('github:sync-one', async (_, id: number) => {
+    const token = db.getSetting('github_token')
+    const owner = db.getSetting('github_owner')
+    const repo = db.getSetting('github_repo')
+
+    if (!token || !owner || !repo) {
+      throw new Error('Configure GitHub in Settings first')
+    }
+
+    const all = db.getProblems()
+    const problem = all.find(p => p.id === id)
+    if (!problem) throw new Error('Problem not found')
+
+    await syncToGitHub({ token, owner, repo }, [problem], all)
+    db.markSynced([id])
+
+    return { synced: 1, message: 'Synced' }
+  })
+
   ipcMain.handle('github:sync', async () => {
     const token = db.getSetting('github_token')
     const owner = db.getSetting('github_owner')

@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   github: {
     sync: () => ipcRenderer.invoke('github:sync'),
+    syncOne: (id: number) => ipcRenderer.invoke('github:sync-one', id),
   },
   code: {
     run: (code: string, language: string) => ipcRenderer.invoke('code:run', code, language),

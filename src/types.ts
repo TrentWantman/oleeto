@@ -76,6 +76,7 @@ export interface ElectronAPI {
   }
   github: {
     sync: () => Promise<SyncResult>
+    syncOne: (id: number) => Promise<SyncResult>
   }
   code: {
     run: (code: string, language: string) => Promise<RunResult>

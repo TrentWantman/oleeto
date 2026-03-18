@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
-import type { NewProblem } from '../types'
+import type { Problem, NewProblem } from '../types'
 import { analyzeComplexity } from '../analyze'
 import { Play, Save, Loader2 } from 'lucide-react'
 
@@ -52,30 +52,33 @@ const EDITOR_THEME = {
 }
 
 interface Props {
-  onAdded: () => void
+  problem?: Problem | null
+  onSaved: () => void
 }
 
 function today(): string {
   return new Date().toISOString().split('T')[0]
 }
 
-export default function AddProblem({ onAdded }: Props) {
-  const [number, setNumber] = useState(0)
-  const [title, setTitle] = useState('')
-  const [url, setUrl] = useState('')
-  const [difficulty, setDifficulty] = useState<NewProblem['difficulty']>('Easy')
-  const [topic, setTopic] = useState('')
-  const [language, setLanguage] = useState('Python')
-  const [solution, setSolution] = useState('')
-  const [notes, setNotes] = useState('')
-  const [solvedAt, setSolvedAt] = useState(today())
-  const [timeComplexity, setTimeComplexity] = useState('')
-  const [spaceComplexity, setSpaceComplexity] = useState('')
+export default function AddProblem({ problem, onSaved }: Props) {
+  const isEditing = !!problem
+
+  const [number, setNumber] = useState(problem?.number ?? 0)
+  const [title, setTitle] = useState(problem?.title ?? '')
+  const [url, setUrl] = useState(problem?.url ?? '')
+  const [difficulty, setDifficulty] = useState<NewProblem['difficulty']>(problem?.difficulty ?? 'Easy')
+  const [topic, setTopic] = useState(problem?.topic ?? '')
+  const [language, setLanguage] = useState(problem?.language ?? 'Python')
+  const [solution, setSolution] = useState(problem?.solution ?? '')
+  const [notes, setNotes] = useState(problem?.notes ?? '')
+  const [solvedAt, setSolvedAt] = useState(problem?.solved_at ?? today())
+  const [timeComplexity, setTimeComplexity] = useState(problem?.time_complexity ?? '')
+  const [spaceComplexity, setSpaceComplexity] = useState(problem?.space_complexity ?? '')
   const [output, setOutput] = useState<{ stdout: string; stderr: string } | null>(null)
   const [running, setRunning] = useState(false)
 
-  const manualTime = useRef(false)
-  const manualSpace = useRef(false)
+  const manualTime = useRef(isEditing)
+  const manualSpace = useRef(isEditing)
 
   useEffect(() => {
     if (!solution.trim()) return
@@ -94,20 +97,27 @@ export default function AddProblem({ onAdded }: Props) {
     try {
       const result = await window.api.code.run(solution, language)
       setOutput({ stdout: result.stdout, stderr: result.stderr })
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to run'
-      setOutput({ stdout: '', stderr: msg })
+    } catch {
+      setOutput({ stdout: '', stderr: 'Failed to run' })
     }
     setRunning(false)
   }
 
   async function handleSave() {
     if (!title || !solution.trim() || number === 0) return
-    await window.api.problems.add({
+
+    const data = {
       number, title, difficulty, language, solution, notes,
       url, topic, timeComplexity, spaceComplexity, solvedAt,
-    })
-    onAdded()
+    }
+
+    if (isEditing) {
+      await window.api.problems.update(problem.id, data)
+    } else {
+      await window.api.problems.add(data)
+    }
+
+    onSaved()
   }
 
   return (
@@ -251,7 +261,7 @@ export default function AddProblem({ onAdded }: Props) {
             className="flex items-center gap-1.5 px-4 py-1.5 text-xs bg-neon/10 text-neon border border-neon/20 rounded-lg font-medium hover:bg-neon/20 hover:shadow-neon transition-all"
           >
             <Save size={12} />
-            Save
+            {isEditing ? 'Update' : 'Save'}
           </button>
         </div>
       </div>

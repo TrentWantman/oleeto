@@ -1,16 +1,24 @@
 import { useState } from 'react'
 import { Github, Loader2 } from 'lucide-react'
+import type { View } from '../App'
 
 interface Props {
   onSynced: () => void
+  onNavigate: (view: View) => void
 }
 
-export default function SyncButton({ onSynced }: Props) {
+export default function SyncButton({ onSynced, onNavigate }: Props) {
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
 
   async function handleSync() {
+    const token = await window.api.settings.get('github_token')
+    if (!token) {
+      onNavigate('settings')
+      return
+    }
+
     setSyncing(true)
     setMessage('')
     setIsError(false)
@@ -19,9 +27,8 @@ export default function SyncButton({ onSynced }: Props) {
       const result = await window.api.github.sync()
       setMessage(result.message)
       if (result.synced > 0) onSynced()
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Sync failed'
-      setMessage(msg)
+    } catch {
+      setMessage('Sync failed')
       setIsError(true)
     } finally {
       setSyncing(false)

@@ -87,9 +87,7 @@ async function upsertFile(
     if (!Array.isArray(existing.data) && 'sha' in existing.data) {
       sha = existing.data.sha
     }
-  } catch {
-    // file doesn't exist yet
-  }
+  } catch {}
 
   await octokit.repos.createOrUpdateFileContents({
     owner: config.owner, repo: config.repo,

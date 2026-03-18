@@ -1,39 +1,69 @@
 import { useEffect, useState } from 'react'
 import type { Problem } from '../types'
-import { Trash2, Check, Upload, ExternalLink } from 'lucide-react'
+import type { View } from '../App'
+import { Trash2, Check, CloudUpload, ExternalLink, Loader2 } from 'lucide-react'
 import SyncButton from './SyncButton'
 
 type Filter = 'all' | 'Easy' | 'Medium' | 'Hard'
 
 interface Props {
   onRefresh: () => void
+  onEdit: (problem: Problem) => void
+  onNavigate: (view: View) => void
 }
 
-export default function ProblemList({ onRefresh }: Props) {
+export default function ProblemList({ onRefresh, onEdit, onNavigate }: Props) {
   const [problems, setProblems] = useState<Problem[]>([])
   const [filter, setFilter] = useState<Filter>('all')
+  const [syncingId, setSyncingId] = useState<number | null>(null)
 
   useEffect(() => {
     window.api.problems.list().then(setProblems)
   }, [])
 
+  const reload = () => window.api.problems.list().then(setProblems)
+
   const filtered = filter === 'all'
     ? problems
     : problems.filter(p => p.difficulty === filter)
 
-  async function handleDelete(id: number) {
+  async function handleDelete(e: React.MouseEvent, id: number) {
+    e.stopPropagation()
     await window.api.problems.delete(id)
     setProblems(prev => prev.filter(p => p.id !== id))
     onRefresh()
   }
 
+  async function handleSyncOne(e: React.MouseEvent, id: number) {
+    e.stopPropagation()
+
+    const token = await window.api.settings.get('github_token')
+    if (!token) {
+      onNavigate('settings')
+      return
+    }
+
+    setSyncingId(id)
+    try {
+      await window.api.github.syncOne(id)
+      reload()
+      onRefresh()
+    } catch {}
+    setSyncingId(null)
+  }
+
+  function handleUrl(e: React.MouseEvent, url: string) {
+    e.stopPropagation()
+    window.api.shell.openExternal(url)
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-100">Problems</h1>
+        <h1 className="text-2xl font-semibold text-gray-100">Problem Log</h1>
 
         <div className="flex items-center gap-3">
-          <SyncButton onSynced={() => window.api.problems.list().then(setProblems)} />
+          <SyncButton onSynced={reload} onNavigate={onNavigate} />
 
           <div className="flex gap-1 bg-surface rounded-lg p-1 border border-border">
             {(['all', 'Easy', 'Medium', 'Hard'] as const).map(f => (
@@ -62,7 +92,8 @@ export default function ProblemList({ onRefresh }: Props) {
           {filtered.map(problem => (
             <div
               key={problem.id}
-              className="bg-surface rounded-lg p-4 border border-border hover:border-neon/10 transition-colors group"
+              onClick={() => onEdit(problem)}
+              className="bg-surface rounded-lg p-4 border border-border hover:border-neon/10 transition-colors group cursor-pointer"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -72,7 +103,7 @@ export default function ProblemList({ onRefresh }: Props) {
 
                   {problem.url ? (
                     <button
-                      onClick={() => window.api.shell.openExternal(problem.url)}
+                      onClick={e => handleUrl(e, problem.url)}
                       className="text-gray-200 hover:text-neon transition-colors flex items-center gap-1.5"
                     >
                       {problem.title}
@@ -107,11 +138,19 @@ export default function ProblemList({ onRefresh }: Props) {
                   {problem.synced ? (
                     <Check size={14} className="text-neon/40" />
                   ) : (
-                    <Upload size={14} className="text-gray-600" />
+                    <button
+                      onClick={e => handleSyncOne(e, problem.id)}
+                      className="text-gray-600 hover:text-neon transition-colors"
+                      title="Sync to GitHub"
+                    >
+                      {syncingId === problem.id
+                        ? <Loader2 size={14} className="animate-spin" />
+                        : <CloudUpload size={14} />}
+                    </button>
                   )}
                   <span className="text-xs text-gray-600">{problem.solved_at}</span>
                   <button
-                    onClick={() => handleDelete(problem.id)}
+                    onClick={e => handleDelete(e, problem.id)}
                     className="text-gray-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <Trash2 size={14} />

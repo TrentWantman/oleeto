@@ -91,7 +91,7 @@ export class Database {
     const entries = Object.entries(data).filter(([k]) => k in columnMap)
     if (entries.length === 0) return
 
-    const sets = entries.map(([k]) => `${columnMap[k]} = ?`).join(', ')
+    const sets = entries.map(([k]) => `${columnMap[k]} = ?`).join(', ') + ', synced = 0'
     const values = entries.map(([, v]) => v)
 
     this.db.prepare(`UPDATE problems SET ${sets} WHERE id = ?`).run(...values, id)
