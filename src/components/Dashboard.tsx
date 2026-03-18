@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react'
-import type { Overview, HeatmapEntry } from '../types'
+import type { Overview, HeatmapEntry, Problem } from '../types'
 import Heatmap from './Heatmap'
-import { Flame, Target, Calendar, TrendingUp } from 'lucide-react'
+import { Flame, Target, Calendar, TrendingUp, RotateCcw } from 'lucide-react'
 
-export default function Dashboard() {
+interface Props {
+  onEdit?: (problem: Problem) => void
+}
+
+export default function Dashboard({ onEdit }: Props) {
   const [overview, setOverview] = useState<Overview | null>(null)
   const [heatmap, setHeatmap] = useState<HeatmapEntry[]>([])
+  const [review, setReview] = useState<Problem[]>([])
 
   useEffect(() => {
     window.api.stats.overview().then(setOverview)
     window.api.stats.heatmap(new Date().getFullYear()).then(setHeatmap)
+    window.api.stats.review().then(setReview)
   }, [])
 
   if (!overview) return null
@@ -61,6 +67,42 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {review.length > 0 && (
+        <div className="bg-surface rounded-xl p-6 border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <RotateCcw size={14} className="text-neon" />
+            <h2 className="text-sm text-gray-500 uppercase tracking-wider">Due for Review</h2>
+          </div>
+          <div className="space-y-2">
+            {review.map(p => {
+              const days = Math.floor(
+                (Date.now() - new Date(p.solved_at + 'T00:00:00').getTime()) / 86400000
+              )
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => onEdit?.(p)}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-neon/5 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-neon/50 text-sm">#{p.number}</span>
+                    <span className="text-gray-300 text-sm">{p.title}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      p.difficulty === 'Easy' ? 'bg-green-900/30 text-green-400' :
+                      p.difficulty === 'Medium' ? 'bg-yellow-900/30 text-yellow-400' :
+                      'bg-red-900/30 text-red-400'
+                    }`}>
+                      {p.difficulty}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-600">{days}d ago</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

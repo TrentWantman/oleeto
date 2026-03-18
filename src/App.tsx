@@ -33,7 +33,7 @@ export default function App() {
 
   return (
     <Layout view={view} onNavigate={navigate}>
-      {view === 'dashboard' && <Dashboard key={refreshKey} />}
+      {view === 'dashboard' && <Dashboard key={refreshKey} onEdit={openEditor} />}
       {view === 'problems' && (
         <ProblemList
           key={refreshKey}

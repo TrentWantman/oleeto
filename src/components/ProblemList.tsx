@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Problem } from '../types'
 import type { View } from '../App'
-import { Trash2, Check, CloudUpload, ExternalLink, Loader2 } from 'lucide-react'
+import { Trash2, Check, CloudUpload, ExternalLink, Loader2, Search } from 'lucide-react'
 import SyncButton from './SyncButton'
 
 type Filter = 'all' | 'Easy' | 'Medium' | 'Hard'
@@ -15,6 +15,7 @@ interface Props {
 export default function ProblemList({ onRefresh, onEdit, onNavigate }: Props) {
   const [problems, setProblems] = useState<Problem[]>([])
   const [filter, setFilter] = useState<Filter>('all')
+  const [search, setSearch] = useState('')
   const [syncingId, setSyncingId] = useState<number | null>(null)
 
   useEffect(() => {
@@ -23,9 +24,14 @@ export default function ProblemList({ onRefresh, onEdit, onNavigate }: Props) {
 
   const reload = () => window.api.problems.list().then(setProblems)
 
-  const filtered = filter === 'all'
-    ? problems
-    : problems.filter(p => p.difficulty === filter)
+  const filtered = problems.filter(p => {
+    if (filter !== 'all' && p.difficulty !== filter) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return p.title.toLowerCase().includes(q) || String(p.number).includes(q)
+    }
+    return true
+  })
 
   async function handleDelete(e: React.MouseEvent, id: number) {
     e.stopPropagation()
@@ -65,6 +71,16 @@ export default function ProblemList({ onRefresh, onEdit, onNavigate }: Props) {
         <div className="flex items-center gap-3">
           <SyncButton onSynced={reload} onNavigate={onNavigate} />
 
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-40 bg-surface border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-gray-300 placeholder-gray-700 focus:outline-none focus:border-neon/30 transition-colors"
+            />
+          </div>
+
           <div className="flex gap-1 bg-surface rounded-lg p-1 border border-border">
             {(['all', 'Easy', 'Medium', 'Hard'] as const).map(f => (
               <button
@@ -85,7 +101,7 @@ export default function ProblemList({ onRefresh, onEdit, onNavigate }: Props) {
 
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-gray-600">
-          <p className="font-mono">No problems yet</p>
+          <p className="font-mono">{search ? 'No matches' : 'No problems yet'}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -127,10 +143,17 @@ export default function ProblemList({ onRefresh, onEdit, onNavigate }: Props) {
 
                   <span className="text-xs text-gray-600 font-mono">{problem.language}</span>
 
-                  {problem.time_complexity && (
-                    <span className="text-[10px] text-gray-600 font-mono">
-                      {problem.time_complexity}
-                    </span>
+                  {problem.personal_difficulty > 0 && (
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <div
+                          key={n}
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            n <= problem.personal_difficulty ? 'bg-neon/60' : 'bg-gray-800'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
 

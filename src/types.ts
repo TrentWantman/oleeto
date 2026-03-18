@@ -10,6 +10,7 @@ export interface Problem {
   topic: string
   time_complexity: string
   space_complexity: string
+  personal_difficulty: number
   solved_at: string
   synced: number
   created_at: string
@@ -26,6 +27,7 @@ export interface NewProblem {
   topic: string
   timeComplexity: string
   spaceComplexity: string
+  personalDifficulty: number
   solvedAt: string
 }
 
@@ -57,6 +59,13 @@ export interface RunResult {
   exitCode: number
 }
 
+export interface LeetCodeQuestion {
+  questionFrontendId: string
+  title: string
+  difficulty: 'Easy' | 'Medium' | 'Hard'
+  topicTags: { name: string }[]
+}
+
 export interface ElectronAPI {
   problems: {
     list: () => Promise<Problem[]>
@@ -69,6 +78,7 @@ export interface ElectronAPI {
   stats: {
     overview: () => Promise<Overview>
     heatmap: (year: number) => Promise<HeatmapEntry[]>
+    review: () => Promise<Problem[]>
   }
   settings: {
     get: (key: string) => Promise<string | null>
@@ -80,6 +90,9 @@ export interface ElectronAPI {
   }
   code: {
     run: (code: string, language: string) => Promise<RunResult>
+  }
+  leetcode: {
+    fetch: (slug: string) => Promise<LeetCodeQuestion | null>
   }
   shell: {
     openExternal: (url: string) => Promise<void>

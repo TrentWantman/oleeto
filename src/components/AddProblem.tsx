@@ -74,11 +74,13 @@ export default function AddProblem({ problem, onSaved }: Props) {
   const [solvedAt, setSolvedAt] = useState(problem?.solved_at ?? today())
   const [timeComplexity, setTimeComplexity] = useState(problem?.time_complexity ?? '')
   const [spaceComplexity, setSpaceComplexity] = useState(problem?.space_complexity ?? '')
+  const [personalDifficulty, setPersonalDifficulty] = useState(problem?.personal_difficulty ?? 0)
   const [output, setOutput] = useState<{ stdout: string; stderr: string } | null>(null)
   const [running, setRunning] = useState(false)
 
   const manualTime = useRef(isEditing)
   const manualSpace = useRef(isEditing)
+  const fetchedSlug = useRef('')
 
   useEffect(() => {
     if (!solution.trim()) return
@@ -89,6 +91,22 @@ export default function AddProblem({ problem, onSaved }: Props) {
     }, 500)
     return () => clearTimeout(timer)
   }, [solution])
+
+  useEffect(() => {
+    const match = url.match(/leetcode\.com\/problems\/([^/]+)/)
+    if (!match) return
+    const slug = match[1]
+    if (slug === fetchedSlug.current) return
+    fetchedSlug.current = slug
+
+    window.api.leetcode.fetch(slug).then(q => {
+      if (!q) return
+      setNumber(n => n || parseInt(q.questionFrontendId))
+      setTitle(t => t || q.title)
+      setDifficulty(q.difficulty)
+      setTopic(t => t || (q.topicTags[0]?.name ?? ''))
+    })
+  }, [url])
 
   async function handleRun() {
     if (!solution.trim()) return
@@ -108,7 +126,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
 
     const data = {
       number, title, difficulty, language, solution, notes,
-      url, topic, timeComplexity, spaceComplexity, solvedAt,
+      url, topic, timeComplexity, spaceComplexity, personalDifficulty, solvedAt,
     }
 
     if (isEditing) {
@@ -119,6 +137,26 @@ export default function AddProblem({ problem, onSaved }: Props) {
 
     onSaved()
   }
+
+  const handleRunRef = useRef(handleRun)
+  const handleSaveRef = useRef(handleSave)
+  handleRunRef.current = handleRun
+  handleSaveRef.current = handleSave
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault()
+        handleRunRef.current()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        handleSaveRef.current()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   return (
     <div className="h-[calc(100vh-6.5rem)] flex flex-col gap-3">
@@ -221,7 +259,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
       )}
 
       <div className="flex items-center justify-between shrink-0 pb-1">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] text-gray-500 uppercase">Time</span>
             <input
@@ -240,14 +278,34 @@ export default function AddProblem({ problem, onSaved }: Props) {
               className="w-24 bg-surface-raised border border-border rounded px-2 py-1 text-xs font-mono text-gray-300 focus:outline-none focus:border-neon/30 transition-colors"
             />
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-500 uppercase">Effort</span>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPersonalDifficulty(personalDifficulty === n ? 0 : n)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${
+                    n <= personalDifficulty
+                      ? 'bg-neon shadow-[0_0_4px_rgba(0,255,65,0.4)]'
+                      : 'bg-gray-700 hover:bg-gray-600'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
           <input
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Notes..."
-            className="w-52 bg-surface-raised border border-border rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-neon/30 transition-colors"
+            className="w-44 bg-surface-raised border border-border rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-neon/30 transition-colors"
           />
         </div>
         <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gray-600 mr-1">
+            {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter run / +S save
+          </span>
           <button
             onClick={handleRun}
             disabled={running || !solution.trim()}

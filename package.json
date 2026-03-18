@@ -37,6 +37,11 @@
   "build": {
     "appId": "com.oleeto.app",
     "productName": "Oleeto",
+    "icon": "build/icon.png",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg"]
+    },
     "files": [
       "dist/**/*",
       "dist-electron/**/*"

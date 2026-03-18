@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('api', {
   stats: {
     overview: () => ipcRenderer.invoke('stats:overview'),
     heatmap: (year: number) => ipcRenderer.invoke('stats:heatmap', year),
+    review: () => ipcRenderer.invoke('stats:review'),
   },
   settings: {
     get: (key: string) => ipcRenderer.invoke('settings:get', key),
@@ -23,6 +24,9 @@ contextBridge.exposeInMainWorld('api', {
   },
   code: {
     run: (code: string, language: string) => ipcRenderer.invoke('code:run', code, language),
+  },
+  leetcode: {
+    fetch: (slug: string) => ipcRenderer.invoke('leetcode:fetch', slug),
   },
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url),

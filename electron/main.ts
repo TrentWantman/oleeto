@@ -39,6 +39,7 @@ function registerHandlers() {
 
   ipcMain.handle('stats:overview', () => db.getOverview())
   ipcMain.handle('stats:heatmap', (_, year) => db.getHeatmapData(year))
+  ipcMain.handle('stats:review', () => db.getReviewDue())
 
   ipcMain.handle('settings:get', (_, key) => db.getSetting(key))
   ipcMain.handle('settings:set', (_, key, value) => db.setSetting(key, value))
@@ -46,6 +47,26 @@ function registerHandlers() {
   ipcMain.handle('code:run', (_, code, language) => runCode(code, language))
 
   ipcMain.handle('shell:open-external', (_, url) => shell.openExternal(url))
+
+  ipcMain.handle('leetcode:fetch', async (_, slug: string) => {
+    try {
+      const res = await fetch('https://leetcode.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Referer': 'https://leetcode.com',
+        },
+        body: JSON.stringify({
+          query: 'query($slug:String!){question(titleSlug:$slug){questionFrontendId title difficulty topicTags{name}}}',
+          variables: { slug },
+        }),
+      })
+      const json = await res.json() as { data?: { question?: unknown } }
+      return json.data?.question ?? null
+    } catch {
+      return null
+    }
+  })
 
   ipcMain.handle('github:sync-one', async (_, id: number) => {
     const token = db.getSetting('github_token')

@@ -49,6 +49,7 @@ export class Database {
       ['topic', "TEXT DEFAULT ''"],
       ['time_complexity', "TEXT DEFAULT ''"],
       ['space_complexity', "TEXT DEFAULT ''"],
+      ['personal_difficulty', 'INTEGER DEFAULT 0'],
     ]
 
     for (const [name, type] of additions) {
@@ -66,8 +67,8 @@ export class Database {
 
   addProblem(p: NewProblem): Problem {
     const result = this.db.prepare(`
-      INSERT INTO problems (number, title, difficulty, language, solution, notes, url, topic, time_complexity, space_complexity, solved_at)
-      VALUES (@number, @title, @difficulty, @language, @solution, @notes, @url, @topic, @timeComplexity, @spaceComplexity, @solvedAt)
+      INSERT INTO problems (number, title, difficulty, language, solution, notes, url, topic, time_complexity, space_complexity, personal_difficulty, solved_at)
+      VALUES (@number, @title, @difficulty, @language, @solution, @notes, @url, @topic, @timeComplexity, @spaceComplexity, @personalDifficulty, @solvedAt)
     `).run(p)
 
     return this.db
@@ -85,7 +86,7 @@ export class Database {
       language: 'language', solution: 'solution', notes: 'notes',
       url: 'url', topic: 'topic',
       timeComplexity: 'time_complexity', spaceComplexity: 'space_complexity',
-      solvedAt: 'solved_at',
+      personalDifficulty: 'personal_difficulty', solvedAt: 'solved_at',
     }
 
     const entries = Object.entries(data).filter(([k]) => k in columnMap)
@@ -191,5 +192,15 @@ export class Database {
     this.db
       .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
       .run(key, value)
+  }
+
+  getReviewDue(): Problem[] {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 7)
+    const cutoffStr = cutoff.toISOString().split('T')[0]
+
+    return this.db
+      .prepare('SELECT * FROM problems WHERE solved_at <= ? ORDER BY solved_at ASC LIMIT 5')
+      .all(cutoffStr) as Problem[]
   }
 }
