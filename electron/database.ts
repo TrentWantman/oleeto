@@ -23,6 +23,10 @@ export class Database {
         language TEXT NOT NULL,
         solution TEXT NOT NULL,
         notes TEXT DEFAULT '',
+        url TEXT DEFAULT '',
+        topic TEXT DEFAULT '',
+        time_complexity TEXT DEFAULT '',
+        space_complexity TEXT DEFAULT '',
         solved_at TEXT NOT NULL,
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -36,6 +40,22 @@ export class Database {
       CREATE INDEX IF NOT EXISTS idx_solved_at ON problems(solved_at);
       CREATE INDEX IF NOT EXISTS idx_synced ON problems(synced);
     `)
+
+    const columns = this.db.prepare('PRAGMA table_info(problems)').all() as { name: string }[]
+    const existing = new Set(columns.map(c => c.name))
+
+    const additions: [string, string][] = [
+      ['url', "TEXT DEFAULT ''"],
+      ['topic', "TEXT DEFAULT ''"],
+      ['time_complexity', "TEXT DEFAULT ''"],
+      ['space_complexity', "TEXT DEFAULT ''"],
+    ]
+
+    for (const [name, type] of additions) {
+      if (!existing.has(name)) {
+        this.db.exec(`ALTER TABLE problems ADD COLUMN ${name} ${type}`)
+      }
+    }
   }
 
   getProblems(): Problem[] {
@@ -46,8 +66,8 @@ export class Database {
 
   addProblem(p: NewProblem): Problem {
     const result = this.db.prepare(`
-      INSERT INTO problems (number, title, difficulty, language, solution, notes, solved_at)
-      VALUES (@number, @title, @difficulty, @language, @solution, @notes, @solvedAt)
+      INSERT INTO problems (number, title, difficulty, language, solution, notes, url, topic, time_complexity, space_complexity, solved_at)
+      VALUES (@number, @title, @difficulty, @language, @solution, @notes, @url, @topic, @timeComplexity, @spaceComplexity, @solvedAt)
     `).run(p)
 
     return this.db
@@ -61,12 +81,10 @@ export class Database {
 
   updateProblem(id: number, data: Partial<NewProblem>) {
     const columnMap: Record<string, string> = {
-      number: 'number',
-      title: 'title',
-      difficulty: 'difficulty',
-      language: 'language',
-      solution: 'solution',
-      notes: 'notes',
+      number: 'number', title: 'title', difficulty: 'difficulty',
+      language: 'language', solution: 'solution', notes: 'notes',
+      url: 'url', topic: 'topic',
+      timeComplexity: 'time_complexity', spaceComplexity: 'space_complexity',
       solvedAt: 'solved_at',
     }
 

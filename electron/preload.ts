@@ -20,4 +20,10 @@ contextBridge.exposeInMainWorld('api', {
   github: {
     sync: () => ipcRenderer.invoke('github:sync'),
   },
+  code: {
+    run: (code: string, language: string) => ipcRenderer.invoke('code:run', code, language),
+  },
+  shell: {
+    openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url),
+  },
 })

@@ -6,6 +6,10 @@ export interface Problem {
   language: string
   solution: string
   notes: string
+  url: string
+  topic: string
+  time_complexity: string
+  space_complexity: string
   solved_at: string
   synced: number
   created_at: string
@@ -18,6 +22,10 @@ export interface NewProblem {
   language: string
   solution: string
   notes: string
+  url: string
+  topic: string
+  timeComplexity: string
+  spaceComplexity: string
   solvedAt: string
 }
 
@@ -43,6 +51,12 @@ export interface SyncResult {
   message: string
 }
 
+export interface RunResult {
+  stdout: string
+  stderr: string
+  exitCode: number
+}
+
 export interface ElectronAPI {
   problems: {
     list: () => Promise<Problem[]>
@@ -62,6 +76,12 @@ export interface ElectronAPI {
   }
   github: {
     sync: () => Promise<SyncResult>
+  }
+  code: {
+    run: (code: string, language: string) => Promise<RunResult>
+  }
+  shell: {
+    openExternal: (url: string) => Promise<void>
   }
 }
 

@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import path from 'path'
 import { Database } from './database'
 import { syncToGitHub } from './github'
+import { runCode } from './runner'
 
 let mainWindow: BrowserWindow | null = null
 let db: Database
@@ -42,6 +43,10 @@ function registerHandlers() {
   ipcMain.handle('settings:get', (_, key) => db.getSetting(key))
   ipcMain.handle('settings:set', (_, key, value) => db.setSetting(key, value))
 
+  ipcMain.handle('code:run', (_, code, language) => runCode(code, language))
+
+  ipcMain.handle('shell:open-external', (_, url) => shell.openExternal(url))
+
   ipcMain.handle('github:sync', async () => {
     const token = db.getSetting('github_token')
     const owner = db.getSetting('github_owner')
@@ -51,13 +56,14 @@ function registerHandlers() {
       throw new Error('Configure GitHub in Settings first')
     }
 
-    const problems = db.getUnsyncedProblems()
-    if (problems.length === 0) {
+    const unsynced = db.getUnsyncedProblems()
+    if (unsynced.length === 0) {
       return { synced: 0, message: 'Already up to date' }
     }
 
-    const count = await syncToGitHub({ token, owner, repo }, problems)
-    db.markSynced(problems.map(p => p.id))
+    const allProblems = db.getProblems()
+    const count = await syncToGitHub({ token, owner, repo }, unsynced, allProblems)
+    db.markSynced(unsynced.map(p => p.id))
 
     return {
       synced: count,

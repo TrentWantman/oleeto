@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Problem } from '../types'
-import { Trash2, Check, Upload } from 'lucide-react'
+import { Trash2, Check, Upload, ExternalLink } from 'lucide-react'
 import SyncButton from './SyncButton'
 
 type Filter = 'all' | 'Easy' | 'Medium' | 'Hard'
@@ -69,7 +69,19 @@ export default function ProblemList({ onRefresh }: Props) {
                   <span className="font-mono text-neon/60 text-sm w-12">
                     #{problem.number}
                   </span>
-                  <span className="text-gray-200">{problem.title}</span>
+
+                  {problem.url ? (
+                    <button
+                      onClick={() => window.api.shell.openExternal(problem.url)}
+                      className="text-gray-200 hover:text-neon transition-colors flex items-center gap-1.5"
+                    >
+                      {problem.title}
+                      <ExternalLink size={12} className="opacity-0 group-hover:opacity-60" />
+                    </button>
+                  ) : (
+                    <span className="text-gray-200">{problem.title}</span>
+                  )}
+
                   <span className={`text-xs px-2 py-0.5 rounded ${
                     problem.difficulty === 'Easy' ? 'bg-green-900/30 text-green-400' :
                     problem.difficulty === 'Medium' ? 'bg-yellow-900/30 text-yellow-400' :
@@ -77,7 +89,18 @@ export default function ProblemList({ onRefresh }: Props) {
                   }`}>
                     {problem.difficulty}
                   </span>
+
+                  {problem.topic && (
+                    <span className="text-xs text-gray-500">{problem.topic}</span>
+                  )}
+
                   <span className="text-xs text-gray-600 font-mono">{problem.language}</span>
+
+                  {problem.time_complexity && (
+                    <span className="text-[10px] text-gray-600 font-mono">
+                      {problem.time_complexity}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3">
