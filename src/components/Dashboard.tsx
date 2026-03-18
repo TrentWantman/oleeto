@@ -7,16 +7,39 @@ interface Props {
   onEdit?: (problem: Problem) => void
 }
 
+function formatDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function Dashboard({ onEdit }: Props) {
   const [overview, setOverview] = useState<Overview | null>(null)
+  const [endDate, setEndDate] = useState(new Date())
   const [heatmap, setHeatmap] = useState<HeatmapEntry[]>([])
   const [review, setReview] = useState<Problem[]>([])
 
   useEffect(() => {
     window.api.stats.overview().then(setOverview)
-    window.api.stats.heatmap(new Date().getFullYear()).then(setHeatmap)
     window.api.stats.review().then(setReview)
   }, [])
+
+  useEffect(() => {
+    const start = new Date(endDate)
+    start.setFullYear(start.getFullYear() - 1)
+    const startStr = formatDate(start)
+    const endStr = formatDate(endDate)
+    window.api.stats.heatmapRange(startStr, endStr).then(setHeatmap)
+  }, [endDate])
+
+  function shiftYear(delta: number) {
+    const next = new Date(endDate)
+    next.setFullYear(next.getFullYear() + delta)
+    const today = new Date()
+    if (next > today) {
+      setEndDate(today)
+    } else {
+      setEndDate(next)
+    }
+  }
 
   if (!overview) return null
 
@@ -47,8 +70,7 @@ export default function Dashboard({ onEdit }: Props) {
       </div>
 
       <div className="bg-surface rounded-xl p-6 border border-border">
-        <h2 className="text-sm text-gray-500 uppercase tracking-wider mb-4">Activity</h2>
-        <Heatmap data={heatmap} />
+        <Heatmap data={heatmap} endDate={endDate} onShift={shiftYear} />
       </div>
 
       <div className="grid grid-cols-3 gap-4">

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('api', {
   stats: {
     overview: () => ipcRenderer.invoke('stats:overview'),
     heatmap: (year: number) => ipcRenderer.invoke('stats:heatmap', year),
+    heatmapRange: (start: string, end: string) => ipcRenderer.invoke('stats:heatmap-range', start, end),
     review: () => ipcRenderer.invoke('stats:review'),
   },
   settings: {

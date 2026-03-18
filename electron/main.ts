@@ -39,6 +39,7 @@ function registerHandlers() {
 
   ipcMain.handle('stats:overview', () => db.getOverview())
   ipcMain.handle('stats:heatmap', (_, year) => db.getHeatmapData(year))
+  ipcMain.handle('stats:heatmap-range', (_, start, end) => db.getHeatmapRange(start, end))
   ipcMain.handle('stats:review', () => db.getReviewDue())
 
   ipcMain.handle('settings:get', (_, key) => db.getSetting(key))

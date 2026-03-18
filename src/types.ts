@@ -78,6 +78,7 @@ export interface ElectronAPI {
   stats: {
     overview: () => Promise<Overview>
     heatmap: (year: number) => Promise<HeatmapEntry[]>
+    heatmapRange: (start: string, end: string) => Promise<HeatmapEntry[]>
     review: () => Promise<Problem[]>
   }
   settings: {
