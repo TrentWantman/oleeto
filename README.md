@@ -22,7 +22,7 @@ A desktop app for tracking your LeetCode grind. Write code, run it, log your sol
 
 - Your GitHub repo gets an auto-generated README with a visual heatmap, stats, and a full problem index
 
-![Editor](screenshots/generated-repo-example.png)
+<img src="screenshots/generated-repo-example.png" width="600" />
 
 ## Install
 
