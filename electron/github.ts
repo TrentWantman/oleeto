@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/rest'
 import type { Problem } from '../src/types'
+import { calculateStreak } from './streak'
 
 interface SyncConfig {
   token: string
@@ -52,26 +53,6 @@ function buildFileContent(p: Problem): string {
   lines.push(p.solution)
 
   return lines.join('\n')
-}
-
-function calculateStreak(problems: Problem[]): number {
-  const dates = [...new Set(problems.map(p => p.solved_at))].sort().reverse()
-  if (dates.length === 0) return 0
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const mostRecent = new Date(dates[0] + 'T00:00:00')
-  const gap = Math.floor((today.getTime() - mostRecent.getTime()) / 86400000)
-  if (gap > 1) return 0
-
-  let streak = 1
-  for (let i = 1; i < dates.length; i++) {
-    const curr = new Date(dates[i - 1] + 'T00:00:00')
-    const prev = new Date(dates[i] + 'T00:00:00')
-    if (Math.floor((curr.getTime() - prev.getTime()) / 86400000) === 1) streak++
-    else break
-  }
-  return streak
 }
 
 function buildHeatmapSvg(problems: Problem[]): string {
@@ -144,7 +125,8 @@ function buildReadme(problems: Problem[]): string {
   const easy = sorted.filter(p => p.difficulty === 'Easy').length
   const medium = sorted.filter(p => p.difficulty === 'Medium').length
   const hard = sorted.filter(p => p.difficulty === 'Hard').length
-  const streak = calculateStreak(problems)
+  const dates = [...new Set(problems.map(p => p.solved_at))].sort().reverse()
+  const streak = calculateStreak(dates)
 
   const now = new Date()
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`

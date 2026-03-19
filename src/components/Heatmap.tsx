@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { HeatmapEntry } from '../types'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { formatDate } from '../date'
 
 interface DayCell {
   date: string | null
@@ -14,13 +15,6 @@ interface MonthLabel {
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DAY_LABELS = ['Mon', '', 'Wed', '', 'Fri', '', '']
-
-function formatDate(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 function buildCalendar(data: HeatmapEntry[], endDate: Date) {
   const counts = new Map(data.map(d => [d.date, d.count]))

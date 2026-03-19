@@ -2,13 +2,10 @@ import { useEffect, useState } from 'react'
 import type { Overview, HeatmapEntry, Problem } from '../types'
 import Heatmap from './Heatmap'
 import { Flame, Target, Calendar, TrendingUp, RotateCcw } from 'lucide-react'
+import { formatDate } from '../date'
 
 interface Props {
   onEdit?: (problem: Problem) => void
-}
-
-function formatDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export default function Dashboard({ onEdit }: Props) {

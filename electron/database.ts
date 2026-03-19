@@ -2,6 +2,7 @@ import BetterSqlite3 from 'better-sqlite3'
 import path from 'path'
 import { app } from 'electron'
 import type { Problem, NewProblem, Overview, HeatmapEntry } from '../src/types'
+import { calculateStreak } from './streak'
 
 export class Database {
   private db: BetterSqlite3.Database
@@ -126,36 +127,13 @@ export class Database {
       total: total.count,
       today: todayCount.count,
       month: monthCount.count,
-      streak: this.calculateStreak(dates.map(d => d.solved_at)),
+      streak: calculateStreak(dates.map(d => d.solved_at)),
       byDifficulty: {
         Easy: byDifficulty.find(d => d.difficulty === 'Easy')?.count ?? 0,
         Medium: byDifficulty.find(d => d.difficulty === 'Medium')?.count ?? 0,
         Hard: byDifficulty.find(d => d.difficulty === 'Hard')?.count ?? 0,
       },
     }
-  }
-
-  private calculateStreak(dates: string[]): number {
-    if (dates.length === 0) return 0
-
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    const mostRecent = new Date(dates[0] + 'T00:00:00')
-    const gap = Math.floor((today.getTime() - mostRecent.getTime()) / 86400000)
-    if (gap > 1) return 0
-
-    let streak = 1
-    for (let i = 1; i < dates.length; i++) {
-      const curr = new Date(dates[i - 1] + 'T00:00:00')
-      const prev = new Date(dates[i] + 'T00:00:00')
-      const diff = Math.floor((curr.getTime() - prev.getTime()) / 86400000)
-
-      if (diff === 1) streak++
-      else break
-    }
-
-    return streak
   }
 
   getHeatmapData(year: number): HeatmapEntry[] {
@@ -165,6 +143,15 @@ export class Database {
       WHERE solved_at BETWEEN ? AND ?
       GROUP BY solved_at
     `).all(`${year}-01-01`, `${year}-12-31`) as HeatmapEntry[]
+  }
+
+  getHeatmapRange(start: string, end: string): HeatmapEntry[] {
+    return this.db.prepare(`
+      SELECT solved_at as date, COUNT(*) as count
+      FROM problems
+      WHERE solved_at BETWEEN ? AND ?
+      GROUP BY solved_at
+    `).all(start, end) as HeatmapEntry[]
   }
 
   getUnsyncedProblems(): Problem[] {
