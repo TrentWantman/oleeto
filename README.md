@@ -18,6 +18,8 @@ A desktop app for tracking your LeetCode grind. Write code, run it, log your sol
 
 ![Editor](screenshots/editor.png)
 
+![Editor](screenshots/generated-repo-example.png)
+
 ## Install
 
 ```bash
