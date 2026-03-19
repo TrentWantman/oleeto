@@ -2,7 +2,7 @@
 
 A desktop app for tracking your LeetCode grind. Write code, run it, log your solves, and sync everything to a clean GitHub repo.
 
-[oleeto.io](https://oleeto.io)
+[trentwantman.github.io/oleeto-landing](https://trentwantman.github.io/oleeto-landing/)
 
 ![Dashboard](screenshots/dashboard.png)
 
