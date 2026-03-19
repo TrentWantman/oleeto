@@ -16,8 +16,7 @@
     "lucide-react": "^0.468.0",
     "monaco-editor": "^0.55.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "recharts": "^2.15.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
@@ -40,7 +39,9 @@
     "icon": "build/icon.png",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": ["dmg"]
+      "target": [
+        "dmg"
+      ]
     },
     "files": [
       "dist/**/*",

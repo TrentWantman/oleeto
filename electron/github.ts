@@ -139,12 +139,14 @@ function buildReadme(problems: Problem[]): string {
   md += ` | **${monthCount}** this month\n\n`
   md += `**${easy}** Easy | **${medium}** Medium | **${hard}** Hard\n\n`
   md += '---\n\n'
-  md += '| # | Title | Difficulty | Topic | Language |\n'
+  md += '| # | Title | Difficulty | Topic | Solution |\n'
   md += '|---|-------|-----------|-------|----------|\n'
 
   for (const p of sorted) {
     const title = p.url ? `[${p.title}](${p.url})` : p.title
-    md += `| ${p.number} | ${title} | ${p.difficulty} | ${p.topic || '-'} | ${p.language} |\n`
+    const file = solutionPath(p)
+    const lang = `[${p.language}](${file})`
+    md += `| ${p.number} | ${title} | ${p.difficulty} | ${p.topic || '-'} | ${lang} |\n`
   }
 
   return md
