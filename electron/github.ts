@@ -56,12 +56,9 @@ function buildFileContent(p: Problem): string {
 }
 
 function buildHeatmapSvg(problems: Problem[]): string {
-  const year = new Date().getFullYear()
   const counts = new Map<string, number>()
   for (const p of problems) {
-    if (p.solved_at.startsWith(String(year))) {
-      counts.set(p.solved_at, (counts.get(p.solved_at) ?? 0) + 1)
-    }
+    counts.set(p.solved_at, (counts.get(p.solved_at) ?? 0) + 1)
   }
 
   const cell = 11
@@ -71,9 +68,11 @@ function buildHeatmapSvg(problems: Problem[]): string {
   const top = 20
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-  const jan1 = new Date(year, 0, 1)
   const today = new Date()
-  const startDow = jan1.getDay()
+  const start = new Date(today)
+  start.setFullYear(start.getFullYear() - 1)
+  start.setDate(start.getDate() + 1)
+  const startDow = start.getDay()
 
   const rects: string[] = []
   const months: { label: string; x: number }[] = []
@@ -81,8 +80,8 @@ function buildHeatmapSvg(problems: Problem[]): string {
   let row = startDow
   let lastMonth = -1
 
-  const d = new Date(jan1)
-  while (d <= today && d.getFullYear() === year) {
+  const d = new Date(start)
+  while (d <= today) {
     const month = d.getMonth()
     if (month !== lastMonth) {
       months.push({ label: monthNames[month], x: left + col * step })
