@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
 import type { Problem, NewProblem } from '../types'
 import { analyzeComplexity } from '../analyze'
-import { Play, Save, Loader2 } from 'lucide-react'
+import { Play, Save, Loader2, StickyNote, ArrowLeft } from 'lucide-react'
 
 const LANGUAGES = [
   'Python', 'JavaScript', 'TypeScript', 'Java',
@@ -77,6 +77,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
   const [personalDifficulty, setPersonalDifficulty] = useState(problem?.personal_difficulty ?? 0)
   const [output, setOutput] = useState<{ stdout: string; stderr: string } | null>(null)
   const [running, setRunning] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
 
   const manualTime = useRef(isEditing)
   const manualSpace = useRef(isEditing)
@@ -166,7 +167,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
           value={number || ''}
           onChange={e => setNumber(parseInt(e.target.value) || 0)}
           placeholder="#"
-          className="w-20 input-field font-mono"
+          className="w-32 input-field font-mono shrink-0"
         />
         <input
           type="text"
@@ -178,7 +179,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
         <select
           value={difficulty}
           onChange={e => setDifficulty(e.target.value as NewProblem['difficulty'])}
-          className="w-28 input-field"
+          className="w-24 input-field appearance-none"
         >
           <option value="Easy">Easy</option>
           <option value="Medium">Medium</option>
@@ -197,7 +198,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
         <select
           value={topic}
           onChange={e => setTopic(e.target.value)}
-          className="w-44 input-field"
+          className="w-44 input-field appearance-none"
         >
           <option value="">Topic</option>
           {TOPICS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -205,7 +206,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
         <select
           value={language}
           onChange={e => setLanguage(e.target.value)}
-          className="w-32 input-field"
+          className="w-32 input-field appearance-none"
         >
           {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
         </select>
@@ -217,27 +218,50 @@ export default function AddProblem({ problem, onSaved }: Props) {
         />
       </div>
 
-      <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-border">
-        <Editor
-          language={MONACO_LANG[language] || 'plaintext'}
-          value={solution}
-          onChange={v => setSolution(v || '')}
-          theme="oleeto"
-          beforeMount={monaco => {
-            monaco.editor.defineTheme('oleeto', EDITOR_THEME)
-          }}
-          options={{
-            fontSize: 14,
-            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            minimap: { enabled: false },
-            padding: { top: 16 },
-            scrollBeyondLastLine: false,
-            renderLineHighlight: 'line',
-            cursorBlinking: 'smooth',
-            smoothScrolling: true,
-            tabSize: 4,
-          }}
-        />
+      <div className="flex-1 min-h-0 flex gap-3">
+        <div className={`${notesOpen ? 'w-1/2' : 'w-full'} rounded-lg overflow-hidden border border-border transition-all`}>
+          <Editor
+            language={MONACO_LANG[language] || 'plaintext'}
+            value={solution}
+            onChange={v => setSolution(v || '')}
+            theme="oleeto"
+            beforeMount={monaco => {
+              monaco.editor.defineTheme('oleeto', EDITOR_THEME)
+            }}
+            options={{
+              fontSize: 14,
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              minimap: { enabled: false },
+              padding: { top: 16 },
+              scrollBeyondLastLine: false,
+              renderLineHighlight: 'line',
+              cursorBlinking: 'smooth',
+              smoothScrolling: true,
+              tabSize: 4,
+            }}
+          />
+        </div>
+
+        {notesOpen && (
+          <div className="w-1/2 flex flex-col rounded-lg border border-border bg-surface overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Notes</span>
+              <button
+                onClick={() => setNotesOpen(false)}
+                className="text-neon hover:text-neon-dim transition-colors"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            </div>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Write your notes here..."
+              autoFocus
+              className="flex-1 bg-transparent px-4 py-3 text-sm text-gray-300 placeholder-gray-700 resize-none focus:outline-none font-mono"
+            />
+          </div>
+        )}
       </div>
 
       {output && (
@@ -295,12 +319,15 @@ export default function AddProblem({ problem, onSaved }: Props) {
               ))}
             </div>
           </div>
-          <input
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Notes..."
-            className="w-44 bg-surface-raised border border-border rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-neon/30 transition-colors"
-          />
+          <button
+            onClick={() => setNotesOpen(!notesOpen)}
+            className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded transition-colors ${
+              notesOpen ? 'text-neon' : notes ? 'text-gray-400' : 'text-gray-600 hover:text-gray-400'
+            }`}
+          >
+            <StickyNote size={12} />
+            Notes{notes ? ' *' : ''}
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-gray-600 mr-1">
