@@ -31,10 +31,10 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           git clone https://x-access-token:${TAP_TOKEN}@github.com/TrentWantman/homebrew-tap.git tap
           cd tap
-          cat > Casks/oleeto.rb << EOF
+          cat > Casks/oleeto.rb << 'CASK'
           cask "oleeto" do
-            version "${VERSION}"
-            sha256 "${SHA}"
+            version "VERSION_PLACEHOLDER"
+            sha256 "SHA_PLACEHOLDER"
 
             url "https://github.com/TrentWantman/oleeto/releases/download/v#{version}/Oleeto-#{version}-arm64.dmg"
             name "oleeto"
@@ -42,9 +42,16 @@ jobs:
             homepage "https://github.com/TrentWantman/oleeto"
 
             app "Oleeto.app"
+
+            postflight do
+              system_command "/usr/bin/xattr",
+                args: ["-r", "-d", "com.apple.quarantine", "#{appdir}/Oleeto.app"]
+            end
           end
-          EOF
+          CASK
           sed -i '' 's/^          //' Casks/oleeto.rb
+          sed -i '' "s/VERSION_PLACEHOLDER/${VERSION}/" Casks/oleeto.rb
+          sed -i '' "s/SHA_PLACEHOLDER/${SHA}/" Casks/oleeto.rb
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add Casks/oleeto.rb

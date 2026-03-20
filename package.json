@@ -43,9 +43,11 @@
     "icon": "build/icon.png",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": [
-        "dmg"
-      ]
+      "identity": null,
+      "target": ["dmg"]
+    },
+    "dmg": {
+      "sign": false
     },
     "files": [
       "dist/**/*",
