@@ -68,13 +68,13 @@ function buildCalendar(data: HeatmapEntry[], endDate: Date) {
   return { weeks, months }
 }
 
-function cellColor(count: number, hasDate: boolean): string {
-  if (!hasDate) return 'bg-transparent'
-  if (count === 0) return 'bg-[#161b16]'
-  if (count === 1) return 'bg-neon/20'
-  if (count === 2) return 'bg-neon/40'
-  if (count <= 4) return 'bg-neon/60'
-  return 'bg-neon/80'
+function cellStyle(count: number, hasDate: boolean): Record<string, string> {
+  if (!hasDate) return {}
+  if (count === 0) return { background: 'rgb(var(--accent) / 0.05)' }
+  if (count === 1) return { background: 'rgb(var(--accent) / 0.2)' }
+  if (count === 2) return { background: 'rgb(var(--accent) / 0.4)' }
+  if (count <= 4) return { background: 'rgb(var(--accent) / 0.6)' }
+  return { background: 'rgb(var(--accent) / 0.8)' }
 }
 
 interface Props {
@@ -147,9 +147,8 @@ export default function Heatmap({ data, endDate, onShift }: Props) {
                   <div
                     key={di}
                     title={day.date ? `${day.date}: ${day.count} solve${day.count !== 1 ? 's' : ''}` : ''}
-                    className={`w-[11px] h-[11px] rounded-sm ${cellColor(day.count, !!day.date)} ${
-                      day.count > 0 ? 'shadow-[0_0_4px_rgba(0,255,65,0.15)]' : ''
-                    }`}
+                    className="w-[11px] h-[11px] rounded-sm"
+                    style={cellStyle(day.count, !!day.date)}
                   />
                 ))}
               </div>

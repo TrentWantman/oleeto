@@ -74,9 +74,9 @@ export default function Dashboard({ onEdit }: Props) {
         {(['Easy', 'Medium', 'Hard'] as const).map(diff => (
           <div key={diff} className="bg-surface rounded-xl p-5 border border-border">
             <span className={`text-xs uppercase tracking-wider ${
-              diff === 'Easy' ? 'text-green-400' :
-              diff === 'Medium' ? 'text-yellow-400' :
-              'text-red-400'
+              diff === 'Easy' ? 'text-green-500' :
+              diff === 'Medium' ? 'text-yellow-500' :
+              'text-red-500'
             }`}>
               {diff}
             </span>
@@ -108,9 +108,9 @@ export default function Dashboard({ onEdit }: Props) {
                     <span className="font-mono text-neon/50 text-sm">#{p.number}</span>
                     <span className="text-gray-300 text-sm">{p.title}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                      p.difficulty === 'Easy' ? 'bg-green-900/30 text-green-400' :
-                      p.difficulty === 'Medium' ? 'bg-yellow-900/30 text-yellow-400' :
-                      'bg-red-900/30 text-red-400'
+                      p.difficulty === 'Easy' ? 'bg-green-500/20 text-green-500' :
+                      p.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-500' :
+                      'bg-red-500/20 text-red-500'
                     }`}>
                       {p.difficulty}
                     </span>
