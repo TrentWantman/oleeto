@@ -2,6 +2,7 @@ import { exec } from 'child_process'
 import { writeFileSync, mkdirSync, rmSync } from 'fs'
 import path from 'path'
 import os from 'os'
+import { wrapWithHarness } from './harness'
 
 const TIMEOUT = 10000
 
@@ -14,6 +15,7 @@ const EXT: Record<string, string> = {
 export function runCode(
   code: string,
   language: string,
+  testInput?: string,
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise(resolve => {
     const ext = EXT[language]
@@ -26,16 +28,31 @@ export function runCode(
     const dir = path.join(os.tmpdir(), `oleeto_${id}`)
     mkdirSync(dir, { recursive: true })
 
+    let finalCode = code
+    let inputRedirect = ''
+
+    if (testInput) {
+      const wrapped = wrapWithHarness(code, language)
+      if (wrapped) {
+        finalCode = wrapped
+      }
+      const inputPath = path.join(dir, 'input.txt')
+      writeFileSync(inputPath, testInput)
+      inputRedirect = ` < "${inputPath}"`
+    }
+
     const filename = language === 'Java' ? 'Solution.java' : `solution${ext}`
     const filePath = path.join(dir, filename)
-    writeFileSync(filePath, code)
+    writeFileSync(filePath, finalCode)
 
-    const cmd = buildCommand(language, filePath, dir)
-    if (!cmd) {
+    const baseCmd = buildCommand(language, filePath, dir)
+    if (!baseCmd) {
       cleanup(dir)
       resolve({ stdout: '', stderr: `No runner for ${language}`, exitCode: 1 })
       return
     }
+
+    const cmd = baseCmd + inputRedirect
 
     exec(cmd, { timeout: TIMEOUT, cwd: dir }, (error, stdout, stderr) => {
       cleanup(dir)

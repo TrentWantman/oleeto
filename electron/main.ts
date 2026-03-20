@@ -45,7 +45,7 @@ function registerHandlers() {
   ipcMain.handle('settings:get', (_, key) => db.getSetting(key))
   ipcMain.handle('settings:set', (_, key, value) => db.setSetting(key, value))
 
-  ipcMain.handle('code:run', (_, code, language) => runCode(code, language))
+  ipcMain.handle('code:run', (_, code, language, testInput) => runCode(code, language, testInput))
 
   ipcMain.handle('shell:open-external', (_, url) => shell.openExternal(url))
 
@@ -58,7 +58,7 @@ function registerHandlers() {
           'Referer': 'https://leetcode.com',
         },
         body: JSON.stringify({
-          query: 'query($slug:String!){question(titleSlug:$slug){questionFrontendId title difficulty topicTags{name}}}',
+          query: 'query($slug:String!){question(titleSlug:$slug){questionFrontendId title difficulty topicTags{name} exampleTestcaseList}}',
           variables: { slug },
         }),
       })

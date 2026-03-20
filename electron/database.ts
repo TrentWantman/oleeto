@@ -167,6 +167,15 @@ export class Database {
     `).all(`${year}-01-01`, `${year}-12-31`) as HeatmapEntry[]
   }
 
+  getHeatmapRange(start: string, end: string): HeatmapEntry[] {
+    return this.db.prepare(`
+      SELECT solved_at as date, COUNT(*) as count
+      FROM problems
+      WHERE solved_at BETWEEN ? AND ?
+      GROUP BY solved_at
+    `).all(start, end) as HeatmapEntry[]
+  }
+
   getUnsyncedProblems(): Problem[] {
     return this.db
       .prepare('SELECT * FROM problems WHERE synced = 0 ORDER BY number')
