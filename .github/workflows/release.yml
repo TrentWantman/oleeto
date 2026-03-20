@@ -15,7 +15,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: npm run package
+      - run: npx electron-builder --publish never
       - uses: softprops/action-gh-release@v2
         with:
           files: release/*.dmg
