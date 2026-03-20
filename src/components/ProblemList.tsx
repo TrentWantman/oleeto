@@ -130,9 +130,9 @@ export default function ProblemList({ onRefresh, onEdit, onNavigate }: Props) {
                   )}
 
                   <span className={`text-xs px-2 py-0.5 rounded ${
-                    problem.difficulty === 'Easy' ? 'bg-green-900/30 text-green-400' :
-                    problem.difficulty === 'Medium' ? 'bg-yellow-900/30 text-yellow-400' :
-                    'bg-red-900/30 text-red-400'
+                    problem.difficulty === 'Easy' ? 'bg-green-500/20 text-green-500' :
+                    problem.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-500' :
+                    'bg-red-500/20 text-red-500'
                   }`}>
                     {problem.difficulty}
                   </span>
