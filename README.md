@@ -27,6 +27,18 @@ A desktop app for tracking your LeetCode grind. Write code, run it, log your sol
 ## Install
 
 ```bash
+brew install --cask TrentWantman/tap/oleeto
+```
+
+Or download the `.dmg` from [Releases](https://github.com/TrentWantman/oleeto/releases/latest). macOS requires this after installing:
+
+```bash
+xattr -cr /Applications/Oleeto.app
+```
+
+Build from source:
+
+```bash
 git clone https://github.com/TrentWantman/oleeto.git
 cd oleeto
 npm install

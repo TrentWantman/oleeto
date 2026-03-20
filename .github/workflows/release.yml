@@ -22,3 +22,31 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: release/*.dmg
+      - name: Update Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          DMG=$(ls release/*.dmg | head -1)
+          SHA=$(shasum -a 256 "$DMG" | awk '{print $1}')
+          VERSION=${GITHUB_REF_NAME#v}
+          git clone https://x-access-token:${TAP_TOKEN}@github.com/TrentWantman/homebrew-tap.git tap
+          cd tap
+          cat > Casks/oleeto.rb << EOF
+          cask "oleeto" do
+            version "${VERSION}"
+            sha256 "${SHA}"
+
+            url "https://github.com/TrentWantman/oleeto/releases/download/v#{version}/Oleeto-#{version}-arm64.dmg"
+            name "oleeto"
+            desc "Desktop LeetCode tracker with code editor and GitHub sync"
+            homepage "https://github.com/TrentWantman/oleeto"
+
+            app "Oleeto.app"
+          end
+          EOF
+          sed -i '' 's/^          //' Casks/oleeto.rb
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add Casks/oleeto.rb
+          git commit -m "update oleeto to ${VERSION}"
+          git push
