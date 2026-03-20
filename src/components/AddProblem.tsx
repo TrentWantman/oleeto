@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
+import type { editor } from 'monaco-editor'
 import type { Problem, NewProblem } from '../types'
 import { analyzeComplexity } from '../analyze'
+import { getCurrentTheme, isLightTheme } from '../themes'
 import { Play, Save, Loader2, StickyNote, ArrowLeft } from 'lucide-react'
 
 const LANGUAGES = [
@@ -23,32 +25,33 @@ const MONACO_LANG: Record<string, string> = {
   'C#': 'csharp', Ruby: 'ruby', Swift: 'swift', Kotlin: 'kotlin',
 }
 
-const EDITOR_THEME = {
-  base: 'vs-dark' as const,
-  inherit: true,
-  rules: [
-    { token: 'keyword', foreground: '00ff41' },
-    { token: 'string', foreground: '00cc33' },
-    { token: 'number', foreground: '00ff41' },
-    { token: 'comment', foreground: '3a3a3a', fontStyle: 'italic' },
-    { token: 'type', foreground: '00cc33' },
-  ],
-  colors: {
-    'editor.background': '#0d0d0d',
-    'editor.foreground': '#e0e0e0',
-    'editor.lineHighlightBackground': '#111111',
-    'editor.selectionBackground': '#0a3d0a',
-    'editorCursor.foreground': '#00ff41',
-    'editorLineNumber.foreground': '#2a4a2a',
-    'editorLineNumber.activeForeground': '#00ff41',
-    'editor.selectionHighlightBackground': '#0a3d0a44',
-    'editorWidget.background': '#111111',
-    'editorWidget.border': '#1f2f1f',
-    'input.background': '#1a1a1a',
-    'input.border': '#1f2f1f',
-    'dropdown.background': '#111111',
-    'dropdown.border': '#1f2f1f',
-  },
+function buildEditorTheme(): editor.IStandaloneThemeData {
+  const t = getCurrentTheme()
+  const light = isLightTheme(t)
+  return {
+    base: light ? 'vs' : 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'keyword', foreground: t.accent.slice(1) },
+      { token: 'comment', foreground: t.textDim.slice(1), fontStyle: 'italic' },
+    ],
+    colors: {
+      'editor.background': t.bg,
+      'editor.foreground': t.text,
+      'editor.lineHighlightBackground': t.surfaceRaised,
+      'editor.selectionBackground': t.accent + '30',
+      'editorCursor.foreground': t.accent,
+      'editorLineNumber.foreground': t.textDim,
+      'editorLineNumber.activeForeground': t.accent,
+      'editor.selectionHighlightBackground': t.accent + '15',
+      'editorWidget.background': t.surface,
+      'editorWidget.border': t.border,
+      'input.background': t.surfaceRaised,
+      'input.border': t.border,
+      'dropdown.background': t.surface,
+      'dropdown.border': t.border,
+    },
+  }
 }
 
 interface Props {
@@ -82,6 +85,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
   const [activeTest, setActiveTest] = useState(0)
   const [testInput, setTestInput] = useState('')
 
+  const themeCleanup = useRef<(() => void) | null>(null)
   const manualTime = useRef(isEditing)
   const manualSpace = useRef(isEditing)
   const fetchedSlug = useRef('')
@@ -165,7 +169,10 @@ export default function AddProblem({ problem, onSaved }: Props) {
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      if (themeCleanup.current) themeCleanup.current()
+    }
   }, [])
 
   return (
@@ -235,7 +242,16 @@ export default function AddProblem({ problem, onSaved }: Props) {
             onChange={v => setSolution(v || '')}
             theme="oleeto"
             beforeMount={monaco => {
-              monaco.editor.defineTheme('oleeto', EDITOR_THEME)
+              monaco.editor.defineTheme('oleeto', buildEditorTheme())
+            }}
+            onMount={(_, monaco) => {
+              if (themeCleanup.current) themeCleanup.current()
+              const update = () => {
+                monaco.editor.defineTheme('oleeto', buildEditorTheme())
+                monaco.editor.setTheme('oleeto')
+              }
+              window.addEventListener('theme-change', update)
+              themeCleanup.current = () => window.removeEventListener('theme-change', update)
             }}
             options={{
               fontSize: 14,
@@ -344,7 +360,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
                   onClick={() => setPersonalDifficulty(personalDifficulty === n ? 0 : n)}
                   className={`w-2.5 h-2.5 rounded-full transition-all ${
                     n <= personalDifficulty
-                      ? 'bg-neon shadow-[0_0_4px_rgba(0,255,65,0.4)]'
+                      ? 'bg-neon shadow-neon'
                       : 'bg-gray-700 hover:bg-gray-600'
                   }`}
                 />

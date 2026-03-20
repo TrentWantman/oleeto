@@ -4,10 +4,22 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: 10 10 10;
+  --surface: 17 17 17;
+  --surface-raised: 26 26 26;
+  --border: 31 47 31;
+  --accent: 0 255 65;
+  --accent-glow: 0 255 65;
+  --text: 224 224 224;
+  --text-muted: 128 128 128;
+  --text-dim: 74 74 74;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: #0a0a0a;
-  color: #e0e0e0;
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -21,28 +33,29 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f2f1f;
+  background: rgb(var(--border));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a4a2a;
+  background: rgb(var(--border) / 0.8);
 }
 
 ::selection {
-  background: rgba(0, 255, 65, 0.2);
-  color: #00ff41;
+  background: rgb(var(--accent) / 0.2);
+  color: rgb(var(--accent));
 }
 
 .drag-region {
   -webkit-app-region: drag;
 }
 
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
 @layer components {
   .input-field {
-    @apply w-full bg-surface-raised border border-border rounded-lg px-4 py-2.5
-      text-gray-200 placeholder-gray-700
-      focus:outline-none focus:border-neon/30 focus:shadow-neon
-      transition-all;
+    @apply w-full rounded-lg px-4 py-2.5 transition-all bg-surface-raised border border-border text-gray-200 placeholder-gray-700 focus:outline-none focus:border-neon/30 focus:shadow-neon;
   }
 }
