@@ -16,4 +16,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm run lint
       - run: npx tsc --noEmit
+      - run: npx vite build

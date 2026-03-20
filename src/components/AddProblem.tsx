@@ -78,6 +78,9 @@ export default function AddProblem({ problem, onSaved }: Props) {
   const [output, setOutput] = useState<{ stdout: string; stderr: string } | null>(null)
   const [running, setRunning] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
+  const [testCases, setTestCases] = useState<string[]>([])
+  const [activeTest, setActiveTest] = useState(0)
+  const [testInput, setTestInput] = useState('')
 
   const manualTime = useRef(isEditing)
   const manualSpace = useRef(isEditing)
@@ -106,6 +109,11 @@ export default function AddProblem({ problem, onSaved }: Props) {
       setTitle(t => t || q.title)
       setDifficulty(q.difficulty)
       setTopic(t => t || (q.topicTags[0]?.name ?? ''))
+      if (q.exampleTestcaseList?.length) {
+        setTestCases(q.exampleTestcaseList)
+        setTestInput(q.exampleTestcaseList[0])
+        setActiveTest(0)
+      }
     })
   }, [url])
 
@@ -114,7 +122,8 @@ export default function AddProblem({ problem, onSaved }: Props) {
     setRunning(true)
     setOutput(null)
     try {
-      const result = await window.api.code.run(solution, language)
+      const input = testInput.trim() || undefined
+      const result = await window.api.code.run(solution, language, input)
       setOutput({ stdout: result.stdout, stderr: result.stderr })
     } catch {
       setOutput({ stdout: '', stderr: 'Failed to run' })
@@ -264,21 +273,44 @@ export default function AddProblem({ problem, onSaved }: Props) {
         )}
       </div>
 
-      {output && (
-        <div className="max-h-40 shrink-0 bg-surface rounded-lg border border-border overflow-y-auto">
-          <div className="flex justify-between items-center px-3 pt-2">
-            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Output</span>
-            <button
-              onClick={() => setOutput(null)}
-              className="text-[10px] text-gray-600 hover:text-gray-400"
-            >
-              Close
-            </button>
+      {(testCases.length > 0 || output) && (
+        <div className="max-h-48 shrink-0 bg-surface rounded-lg border border-border overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 px-3 pt-2 pb-1 shrink-0">
+            {testCases.length > 0 && (
+              <div className="flex gap-1">
+                {testCases.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setActiveTest(i); setTestInput(testCases[i]) }}
+                    className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                      activeTest === i
+                        ? 'bg-neon/10 text-neon'
+                        : 'text-gray-600 hover:text-gray-400'
+                    }`}
+                  >
+                    Test {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+            {output && (
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider ml-auto">Output</span>
+            )}
           </div>
-          <pre className="px-3 pb-3 pt-1 text-xs font-mono whitespace-pre-wrap">
-            {output.stdout && <span className="text-gray-300">{output.stdout}</span>}
-            {output.stderr && <span className="text-red-400">{output.stderr}</span>}
-          </pre>
+          <div className="flex flex-1 min-h-0">
+            {testCases.length > 0 && (
+              <textarea
+                value={testInput}
+                onChange={e => setTestInput(e.target.value)}
+                className="w-1/2 bg-transparent px-3 pb-2 text-xs font-mono text-gray-300 resize-none focus:outline-none border-r border-border"
+              />
+            )}
+            <pre className={`${testCases.length > 0 ? 'w-1/2' : 'w-full'} px-3 pb-2 text-xs font-mono whitespace-pre-wrap overflow-y-auto`}>
+              {output?.stdout && <span className="text-gray-300">{output.stdout}</span>}
+              {output?.stderr && <span className="text-red-400">{output.stderr}</span>}
+              {!output && <span className="text-gray-700">Run to see output</span>}
+            </pre>
+          </div>
         </div>
       )}
 
