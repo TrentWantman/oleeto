@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld('api', {
     syncOne: (id: number) => ipcRenderer.invoke('github:sync-one', id),
   },
   code: {
-    run: (code: string, language: string) => ipcRenderer.invoke('code:run', code, language),
+    run: (code: string, language: string, testInput?: string) => ipcRenderer.invoke('code:run', code, language, testInput),
   },
   leetcode: {
     fetch: (slug: string) => ipcRenderer.invoke('leetcode:fetch', slug),

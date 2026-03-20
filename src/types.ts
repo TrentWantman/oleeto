@@ -64,6 +64,7 @@ export interface LeetCodeQuestion {
   title: string
   difficulty: 'Easy' | 'Medium' | 'Hard'
   topicTags: { name: string }[]
+  exampleTestcaseList: string[]
 }
 
 export interface ElectronAPI {
@@ -90,7 +91,7 @@ export interface ElectronAPI {
     syncOne: (id: number) => Promise<SyncResult>
   }
   code: {
-    run: (code: string, language: string) => Promise<RunResult>
+    run: (code: string, language: string, testInput?: string) => Promise<RunResult>
   }
   leetcode: {
     fetch: (slug: string) => Promise<LeetCodeQuestion | null>
