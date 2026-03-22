@@ -9,6 +9,10 @@ export function extractMethodName(code: string, language: string): { name: strin
     const match = code.match(/var (\w+)\s*=\s*function/) || code.match(/(\w+)\s*=\s*function/)
     if (match) return { name: match[1], isMethod: false }
   }
+  if (language === 'C++') {
+    const match = code.match(/\s+(\w+)\s*\([^)]*\)\s*\{/)
+    if (match) return { name: match[1], isMethod: true }
+  }
   return null
 }
 
@@ -45,4 +49,11 @@ export function wrapWithHarness(code: string, language: string): string | null {
   }
 
   return null
+}
+
+export function prependIncludes(code: string, language: string): string {
+  if (language === 'C++' && !code.includes('#include')) {
+    return '#include <bits/stdc++.h>\nusing namespace std;\n\n' + code
+  }
+  return code
 }
