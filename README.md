@@ -65,13 +65,6 @@ Outputs a `.dmg` to the `release/` directory.
 
 ![Settings](screenshots/settings.png)
 
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| Cmd+Enter | Run solution |
-| Cmd+S | Save problem |
-
 ## License
 
 MIT
