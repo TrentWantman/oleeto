@@ -2,7 +2,7 @@ import { exec } from 'child_process'
 import { writeFileSync, mkdirSync, rmSync } from 'fs'
 import path from 'path'
 import os from 'os'
-import { wrapWithHarness } from './harness'
+import { wrapWithHarness, prependIncludes } from './harness'
 
 const TIMEOUT = 10000
 
@@ -28,7 +28,7 @@ export function runCode(
     const dir = path.join(os.tmpdir(), `oleeto_${id}`)
     mkdirSync(dir, { recursive: true })
 
-    let finalCode = code
+    let finalCode = prependIncludes(code, language)
     let inputRedirect = ''
 
     if (testInput) {

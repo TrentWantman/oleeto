@@ -113,7 +113,8 @@ export class Database {
       .prepare('SELECT difficulty, COUNT(*) as count FROM problems GROUP BY difficulty')
       .all() as { difficulty: string; count: number }[]
 
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     const monthStart = `${today.substring(0, 7)}-01`
 
     const todayCount = this.db
@@ -189,7 +190,7 @@ export class Database {
   getReviewDue(): Problem[] {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 7)
-    const cutoffStr = cutoff.toISOString().split('T')[0]
+    const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`
 
     return this.db
       .prepare('SELECT * FROM problems WHERE solved_at <= ? ORDER BY solved_at ASC LIMIT 5')
