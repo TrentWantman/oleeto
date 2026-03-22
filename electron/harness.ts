@@ -51,9 +51,27 @@ export function wrapWithHarness(code: string, language: string): string | null {
   return null
 }
 
+const CPP_INCLUDES = [
+  '#include <iostream>',
+  '#include <vector>',
+  '#include <string>',
+  '#include <unordered_map>',
+  '#include <unordered_set>',
+  '#include <map>',
+  '#include <set>',
+  '#include <queue>',
+  '#include <stack>',
+  '#include <algorithm>',
+  '#include <cmath>',
+  '#include <climits>',
+  '#include <numeric>',
+  '#include <sstream>',
+  'using namespace std;',
+].join('\n')
+
 export function prependIncludes(code: string, language: string): string {
   if (language === 'C++' && !code.includes('#include')) {
-    return '#include <bits/stdc++.h>\nusing namespace std;\n\n' + code
+    return CPP_INCLUDES + '\n\n' + code
   }
   return code
 }
