@@ -40,6 +40,11 @@ export class Database {
 
       CREATE INDEX IF NOT EXISTS idx_solved_at ON problems(solved_at);
       CREATE INDEX IF NOT EXISTS idx_synced ON problems(synced);
+
+      CREATE TABLE IF NOT EXISTS deleted_syncs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_path TEXT NOT NULL
+      );
     `)
 
     const columns = this.db.prepare('PRAGMA table_info(problems)').all() as { name: string }[]
@@ -189,5 +194,22 @@ export class Database {
     return this.db
       .prepare('SELECT * FROM problems WHERE solved_at <= ? ORDER BY solved_at ASC LIMIT 5')
       .all(cutoffStr) as Problem[]
+  }
+
+  trackDeletion(filePath: string) {
+    this.db.prepare('INSERT INTO deleted_syncs (file_path) VALUES (?)').run(filePath)
+  }
+
+  getDeletedSyncs(): string[] {
+    const rows = this.db.prepare('SELECT file_path FROM deleted_syncs').all() as { file_path: string }[]
+    return rows.map(r => r.file_path)
+  }
+
+  clearDeletedSyncs() {
+    this.db.exec('DELETE FROM deleted_syncs')
+  }
+
+  getProblemById(id: number): Problem | undefined {
+    return this.db.prepare('SELECT * FROM problems WHERE id = ?').get(id) as Problem | undefined
   }
 }
