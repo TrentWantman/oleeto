@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import path from 'path'
 import { Database } from './database'
-import { syncToGitHub } from './github'
+import { syncToGitHub, solutionPath } from './github'
 import { runCode } from './runner'
 
 let mainWindow: BrowserWindow | null = null
@@ -32,7 +32,13 @@ function createWindow() {
 function registerHandlers() {
   ipcMain.handle('problems:list', () => db.getProblems())
   ipcMain.handle('problems:add', (_, problem) => db.addProblem(problem))
-  ipcMain.handle('problems:delete', (_, id) => db.deleteProblem(id))
+  ipcMain.handle('problems:delete', (_, id) => {
+    const problem = db.getProblemById(id)
+    if (problem?.synced) {
+      db.trackDeletion(solutionPath(problem))
+    }
+    db.deleteProblem(id)
+  })
   ipcMain.handle('problems:update', (_, id, data) => db.updateProblem(id, data))
   ipcMain.handle('problems:unsynced', () => db.getUnsyncedProblems())
   ipcMain.handle('problems:mark-synced', (_, ids) => db.markSynced(ids))
@@ -82,8 +88,10 @@ function registerHandlers() {
     const problem = all.find(p => p.id === id)
     if (!problem) throw new Error('Problem not found')
 
-    await syncToGitHub({ token, owner, repo }, [problem], all)
+    const deleted = db.getDeletedSyncs()
+    await syncToGitHub({ token, owner, repo }, [problem], all, deleted)
     db.markSynced([id])
+    db.clearDeletedSyncs()
 
     return { synced: 1, message: 'Synced' }
   })
@@ -98,13 +106,16 @@ function registerHandlers() {
     }
 
     const unsynced = db.getUnsyncedProblems()
-    if (unsynced.length === 0) {
+    const deleted = db.getDeletedSyncs()
+
+    if (unsynced.length === 0 && deleted.length === 0) {
       return { synced: 0, message: 'Already up to date' }
     }
 
     const allProblems = db.getProblems()
-    const count = await syncToGitHub({ token, owner, repo }, unsynced, allProblems)
+    const count = await syncToGitHub({ token, owner, repo }, unsynced, allProblems, deleted)
     db.markSynced(unsynced.map(p => p.id))
+    db.clearDeletedSyncs()
 
     return {
       synced: count,

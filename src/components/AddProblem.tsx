@@ -135,6 +135,22 @@ export default function AddProblem({ problem, onSaved }: Props) {
     setRunning(false)
   }
 
+  function hasChanges(): boolean {
+    if (!problem) return true
+    return number !== problem.number
+      || title !== problem.title
+      || difficulty !== problem.difficulty
+      || language !== problem.language
+      || solution !== problem.solution
+      || notes !== problem.notes
+      || url !== problem.url
+      || topic !== problem.topic
+      || timeComplexity !== problem.time_complexity
+      || spaceComplexity !== problem.space_complexity
+      || personalDifficulty !== problem.personal_difficulty
+      || solvedAt !== problem.solved_at
+  }
+
   async function handleSave() {
     if (!title || !solution.trim() || number === 0) return
 
@@ -144,6 +160,7 @@ export default function AddProblem({ problem, onSaved }: Props) {
     }
 
     if (isEditing) {
+      if (!hasChanges()) { onSaved(); return }
       await window.api.problems.update(problem.id, data)
     } else {
       await window.api.problems.add(data)

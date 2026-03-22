@@ -26,7 +26,7 @@ function fmtDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function solutionPath(p: Problem): string {
+export function solutionPath(p: Problem): string {
   const ext = EXT_MAP[p.language] ?? '.txt'
   const num = String(p.number).padStart(4, '0')
   return `solutions/${num}-${slugify(p.title)}${ext}`
@@ -176,12 +176,32 @@ async function upsertFile(
   })
 }
 
+async function deleteFile(octokit: Octokit, config: SyncConfig, path: string) {
+  try {
+    const existing = await octokit.repos.getContent({
+      owner: config.owner, repo: config.repo, path,
+    })
+    if (!Array.isArray(existing.data) && 'sha' in existing.data) {
+      await octokit.repos.deleteFile({
+        owner: config.owner, repo: config.repo, path,
+        message: `remove ${path}`,
+        sha: existing.data.sha,
+      })
+    }
+  } catch {}
+}
+
 export async function syncToGitHub(
   config: SyncConfig,
   unsynced: Problem[],
   allProblems: Problem[],
+  deletedPaths: string[],
 ): Promise<number> {
   const octokit = new Octokit({ auth: config.token })
+
+  for (const path of deletedPaths) {
+    await deleteFile(octokit, config, path)
+  }
 
   for (const problem of unsynced) {
     const path = solutionPath(problem)
