@@ -35,7 +35,7 @@ function registerHandlers() {
   ipcMain.handle('problems:delete', (_, id) => {
     const problem = db.getProblemById(id)
     if (problem?.synced) {
-      db.trackDeletion(solutionPath(problem))
+      db.trackDeletion(solutionPath(problem, db.getProblems()))
     }
     db.deleteProblem(id)
   })
